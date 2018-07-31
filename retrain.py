@@ -164,7 +164,7 @@ with graph.as_default():
 
 		for iteration in range(NUM_ITERS):			  # Train iteratively for NUM_iterationS.		 
 
-			if iteration % 1000 == 0:
+			if iteration % 2000 == 0:
 
 				output_values = output.eval(feed_dict = {x:valid_data[:3]})
 				print('valid: {0:.2f} - {1:.2f}'.format(output_values[0][0]*360, valid_labels[0][0]*360))
@@ -183,7 +183,7 @@ with graph.as_default():
 				print(output_angles_valid[:min(len(valid_data),10)])
 
 
-			if iteration % 50 == 0:
+			if iteration % 200 == 0:
 
 				train_accuracy = np.mean( [loss.eval( \
 					feed_dict={x:train_data[i*BATCH_SIZE:(i+1)*BATCH_SIZE], \
