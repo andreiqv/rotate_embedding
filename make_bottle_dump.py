@@ -79,22 +79,16 @@ def split_data(data, ratio=(6,1,3)):
 	data_train = dict()
 	data_valid = dict()
 	data_test = dict()
+	
+	for key in data_train:
+		data_train[key] = data[key][ : len_train]
 
-	data_train['images'] = data['images'][ : len_train]
-	data_train['labels'] = data['labels'][ : len_train]
-	data_train['filenames'] = data['filenames'][ : len_train]
-	data_train['embedding'] = data['embedding'][ : len_train]
+	for key in data_valid:
+		data_valid[key] = data[key][len_train : len_train + len_valid]
 
-	data_valid['images'] = data['images'][len_train : len_train + len_valid]
-	data_valid['labels'] = data['labels'][len_train : len_train + len_valid]
-	data_valid['filenames'] = data['filenames'][len_train : len_train + len_valid]
-	data_valid['embedding'] = data['embedding'][len_train : len_train + len_valid]
+	for key in data_test:
+		ddata_test[key] = data[key][len_train + len_valid : ]
 
-	data_test['images'] = data['images'][len_train + len_valid : ]
-	data_test['labels'] = data['labels'][len_train + len_valid : ]
-	data_test['filenames'] = data['filenames'][len_train + len_valid : ]
-	data_test['embedding'] = data['embedding'][len_train + len_valid : ]
-  
 	data_train['size'] = len(data_train['labels'])
 	data_valid['size'] = len(data_valid['labels'])
 	data_test['size'] = len(data_test['labels'])
