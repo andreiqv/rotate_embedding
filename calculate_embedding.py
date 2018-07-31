@@ -8,6 +8,28 @@ np.set_printoptions(precision=4, suppress=True)
 import tensorflow as tf
 import tensorflow_hub as hub
 
+
+
+"""
+def module1(x, shape):
+
+	fullconn_input_size = shape[0] * shape[1] * shape[2]
+	p_flat = tf.reshape(x, [-1, fullconn_input_size])
+	f1 = fullyConnectedLayer(p_flat, input_size=fullconn_input_size, num_neurons=1024, 
+		func=tf.nn.relu, name='M_F1')
+	
+	drop1 = tf.layers.dropout(inputs=f1, rate=0.4)	
+	f2 = fullyConnectedLayer(drop1, input_size=1024, num_neurons=1024, 
+		func=tf.nn.relu, name='M_F2')
+	
+	drop2 = tf.layers.dropout(inputs=f2, rate=0.4)	
+	f3 = fullyConnectedLayer(drop2, input_size=1024, num_neurons=1001, 
+		func=tf.sigmoid, name='M_F3')
+
+	return f3
+"""
+
+
 def calculate_embedding(images, shape):
 
 	height, width, color =  shape

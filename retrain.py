@@ -2,18 +2,6 @@
 # -*- coding: utf-8 -*-
 """ 
 in 
-- conv 5х5 - pool 3х3 
-- conv 4х4 - pool 3х3  
-- conv 3х3 - pool 2х2  
-- reshape - 1024 - dense -dense - mse
-
-Validation:
-train: 296.32 - 194.00
-train: 326.57 - 356.00
-train: 378.93 - 156.00
-valid: 75.48 - 76.00
-valid: 239.89 - 51.00
-iteration 420: train_acc=0.2516, valid_acc=0.2653
 
 """
 
@@ -46,17 +34,24 @@ data = pickle.load(f)
 train = data['train']
 valid = data['valid']
 test  = data['test']
+train_data = train['embedding']
+valid_data = valid['embedding']
+test_data = test['embedding']
+train_labels = train['labels']
+valid_labels = valid['labels']
+test_labels = test['labels']
+
 print('train size:', train['size'])
 print('valid size:', valid['size'])
 print('test size:', test['size'])
-im0 = train['images'][0]
+im0 = train_data[0]
 print('Data was loaded.')
 print(im0.shape)
 #sys.exit()
 
-#train['images'] = [np.transpose(t) for t in train['images']]
-#valid['images'] = [np.transpose(t) for t in valid['images']]
-#test['images'] = [np.transpose(t) for t in test['images']]
+#train_data = [np.transpose(t) for t in train_data]
+#valid_data = [np.transpose(t) for t in valid_data]
+#test_images = [np.transpose(t) for t in test_images]
 num_train_batches = train['size'] // BATCH_SIZE
 num_valid_batches = valid['size'] // BATCH_SIZE
 num_test_batches = test['size'] // BATCH_SIZE
@@ -120,35 +115,6 @@ def fullyConnectedLayer(p_in, input_size, num_neurons, func=None, name=''):
 
 #------------------------
 
-def calc_bottleneck_values(sess, data):
-
-	bottlenecks = []
-
-	for d in data:
-		bottleneck_value = sess.run(bottleneck_tensor, 
-			{resized_input_tensor: [d]})
-		bottleneck_value = np.squeeze(bottleneck_value)
-		bottlenecks.append(bottleneck_value)
-
-	return np.array(bottlenecks)
-
-
-def module1(x, shape):
-
-	fullconn_input_size = shape[0] * shape[1] * shape[2]
-	p_flat = tf.reshape(x, [-1, fullconn_input_size])
-	f1 = fullyConnectedLayer(p_flat, input_size=fullconn_input_size, num_neurons=1024, 
-		func=tf.nn.relu, name='M_F1')
-	
-	drop1 = tf.layers.dropout(inputs=f1, rate=0.4)	
-	f2 = fullyConnectedLayer(drop1, input_size=1024, num_neurons=1024, 
-		func=tf.nn.relu, name='M_F2')
-	
-	drop2 = tf.layers.dropout(inputs=f2, rate=0.4)	
-	f3 = fullyConnectedLayer(drop2, input_size=1024, num_neurons=1001, 
-		func=tf.sigmoid, name='M_F3')
-
-	return f3
 
 #-------------------
 
@@ -158,58 +124,35 @@ graph = tf.Graph() # no necessiry
 with graph.as_default():
 
 	# 1. Construct a graph representing the model.
-	height, width =  224, 224
-	x = tf.placeholder(tf.float32, [None, height, width, 3], name='Placeholder-x') # Placeholder for input.
+	bottleneck_tensor_size = 1001
+	x = tf.placeholder(tf.float32, [None, 1, bottleneck_tensor_size], name='Placeholder-x') # Placeholder for input.
 	y = tf.placeholder(tf.float32, [None, 1], name='Placeholder-y')   # Placeholder for labels.
 	
-	resized_input_tensor = tf.reshape(x, [-1, height, width, 3]) #[batch_size, height, width, 3].
-
-	#resized_input_tensor = tf.placeholder(tf.float32, [None, height, width, 3])
-	#hub.load_module_spec(FLAGS.tfhub_module)
-	#m = hub.Module(module_spec)
-	#bottleneck_tensor = m(resized_input_tensor)
-
-	"""
-	#module = hub.Module("https://tfhub.dev/google/imagenet/inception_v3/feature_vector/1")
-	#module = hub.Module("https://tfhub.dev/google/imagenet/resnet_v2_50/classification/1")		
-	module = hub.Module("https://tfhub.dev/google/imagenet/resnet_v2_152/classification/1")	
-	assert height, width == hub.get_expected_image_size(module)
-	bottleneck_tensor = module(resized_input_tensor)  # Features with shape [batch_size, num_features]
-	"""
-	bottleneck_tensor = module1(resized_input_tensor, shape=(height, width, 3))  # Features with shape [batch_size, num_features]
-	print('bottleneck_tensor:', bottleneck_tensor)
-
-	bottleneck_tensor_size = 1001
-	bottleneck_input = tf.placeholder_with_default(  # A placeholder op that passes through input when its output is not fed.
-		bottleneck_tensor,
-		shape=[None, bottleneck_tensor_size],
-		name='BottleneckInputPlaceholder')
-
-	print('bottleneck_input:', bottleneck_input)
+	input_bottleneck = tf.reshape(x, [-1, bottleneck_tensor_size])
 
 	f1 = fullyConnectedLayer(
-		bottleneck_input, input_size=bottleneck_tensor_size, num_neurons=512, 
+		input_bottleneck, input_size=bottleneck_tensor_size, num_neurons=512, 
 		func=tf.nn.relu, name='F1')
 	
 	drop1 = tf.layers.dropout(inputs=f1, rate=0.4)	
 	
 	f2 = fullyConnectedLayer(drop1, input_size=512, num_neurons=1, 
-		func=tf.sigmoid, name='F2')
+		func=None, name='F2')
 
 	output = f2
 	print('output =', output)
 
 	# 2. Add nodes that represent the optimization algorithm.
 
-	#loss = tf.reduce_mean(tf.square(output - y))
+	loss = tf.reduce_mean(tf.square(output - y))
 	
 	#loss = tf.reduce_sum(tf.pow(output - y, 2))/(n_instances)
-	loss = tf.reduce_mean(tf.squared_difference(output, y))
+	#loss = tf.reduce_mean(tf.squared_difference(output, y))
 	#loss = tf.nn.l2_loss(output - y)
 
 	#optimizer = tf.train.AdagradOptimizer(0.01)
-	#optimizer= tf.train.AdagradOptimizer(0.01)
-	optimizer= tf.train.AdamOptimizer(0.01)
+	optimizer= tf.train.AdagradOptimizer(0.001)
+	#optimizer= tf.train.AdamOptimizer(0.01)
 	#train_op = tf.train.GradientDescentOptimizer(0.01)
 	train_op = optimizer.minimize(loss)
 
@@ -218,27 +161,17 @@ with graph.as_default():
 		init = tf.global_variables_initializer()
 		sess.run(init)	# Randomly initialize weights.
 
-
-		# calculate output of bottleneck
-		print('calculate output of bottleneck:')
-		train_bottlenecks = calc_bottleneck_values(sess, train['images'])
-		print('train_bottlenecks shape:', train_bottlenecks.shape)
-
 		for iteration in range(NUM_ITERS):			  # Train iteratively for NUM_iterationS.		 
 
 			if iteration % 200 == 0:
 
-				#output_values = output.eval(feed_dict = {x:train['images'][:3]})
-				#print('train: {0:.2f} - {1:.2f}'.format(output_values[0][0]*360, train['labels'][0]*360))
-				#print('train: {0:.2f} - {1:.2f}'.format(output_values[1][0]*360, train['labels'][1]*360))
-				output_values = output.eval(feed_dict = {x:valid['images'][:3]})
-				print('valid: {0:.2f} - {1:.2f}'.format(output_values[0][0]*360, valid['labels'][0][0]*360))
-				print('valid: {0:.2f} - {1:.2f}'.format(output_values[1][0]*360, valid['labels'][1][0]*360))
-				#print('valid: {0:.2f} - {1:.2f}'.format(output_values[2][0]*360, valid['labels'][2]*360))
+				output_values = output.eval(feed_dict = {x:valid_data[:3]})
+				print('valid: {0:.2f} - {1:.2f}'.format(output_values[0][0]*360, valid_labels[0][0]*360))
+				print('valid: {0:.2f} - {1:.2f}'.format(output_values[1][0]*360, valid_labels[1][0]*360))
 
 				output_angles_valid = []
 				for i in range(num_valid_batches):
-					feed_dict = {x:valid['images'][i*BATCH_SIZE:(i+1)*BATCH_SIZE]}
+					feed_dict = {x:valid_data[i*BATCH_SIZE:(i+1)*BATCH_SIZE]}
 					#print(feed_dict)
 					output_values = output.eval(feed_dict=feed_dict)
 					#print(i, output_values)
@@ -252,13 +185,14 @@ with graph.as_default():
 			if iteration % 50 == 0:
 
 				train_accuracy = np.mean( [loss.eval( \
-					feed_dict={x:train['images'][i*BATCH_SIZE:(i+1)*BATCH_SIZE], \
-					y:train['labels'][i*BATCH_SIZE:(i+1)*BATCH_SIZE]}) \
-					for i in range(0,num_train_batches)])
+					feed_dict={x:train_data[i*BATCH_SIZE:(i+1)*BATCH_SIZE], \
+					y:train_labels[i*BATCH_SIZE:(i+1)*BATCH_SIZE]}) \
+					for i in range(0, num_train_batches)])
+				
 				valid_accuracy = np.mean([ loss.eval( \
-					feed_dict={x:valid['images'][i*BATCH_SIZE:(i+1)*BATCH_SIZE], \
-					y:valid['labels'][i*BATCH_SIZE:(i+1)*BATCH_SIZE]}) \
-					for i in range(0,num_valid_batches)])
+					feed_dict={x:valid_data[i*BATCH_SIZE:(i+1)*BATCH_SIZE], \
+					y:valid_labels[i*BATCH_SIZE:(i+1)*BATCH_SIZE]}) \
+					for i in range(0, num_valid_batches)])
 
 				if valid_accuracy < min_valid_accuracy:
 					min_valid_accuracy = valid_accuracy
@@ -268,26 +202,24 @@ with graph.as_default():
 					format(iteration, train_accuracy, valid_accuracy, min_valid_accuracy, min_in_grad))
 
 				"""
-				#train_accuracy = loss.eval(feed_dict = {x:train['images'][0:BATCH_SIZE], y:train['labels'][0:BATCH_SIZE]})
-				#valid_accuracy = loss.eval(feed_dict = {x:valid['images'][0:BATCH_SIZE], y:valid['labels'][0:BATCH_SIZE]})
+				#train_accuracy = loss.eval(feed_dict = {x:train_data[0:BATCH_SIZE], y:train_labels[0:BATCH_SIZE]})
+				#valid_accuracy = loss.eval(feed_dict = {x:valid_data[0:BATCH_SIZE], y:valid_labels[0:BATCH_SIZE]})
 				"""
 			
 			# TRAIN:
 			a1 = iteration*BATCH_SIZE % train['size']
 			a2 = (iteration + 1)*BATCH_SIZE % train['size']
-			x_data = train['images'][a1:a2]
-			train_bottlenecks_batch = train_bottlenecks[a1:a2]
-			y_data = train['labels'][a1:a2]
+			x_data = train_data[a1:a2]
+			y_data = train_labels[a1:a2]
 
 			if len(x_data) <= 0: continue
 			sess.run(train_op, 
-				feed_dict={bottleneck_input: train_bottlenecks_batch, y: y_data})  # Perform one training iteration.		
-			#print(a1, a2, y_data)			
+				feed_dict={x: x_data, y: y_data})  # Perform one training iteration.		
 
 		# Save the comp. graph
 
 		"""
-		x_data, y_data =  valid['images'], valid['labels'] #mnist.train.next_batch(BATCH_SIZE)		
+		x_data, y_data =  valid_data, valid_labels #mnist.train.next_batch(BATCH_SIZE)		
 		writer = tf.summary.FileWriter("output", sess.graph)
 		print(sess.run(train_op, feed_dict={x: x_data, y: y_data}))
 		writer.close()  
@@ -298,14 +230,14 @@ with graph.as_default():
 		HERE SOME ERROR ON GPU OCCURS
 		num_test_batches = test['size'] // BATCH_SIZE
 		test_accuracy = np.mean([ loss.eval( \
-			feed_dict={x:test['images'][i*BATCH_SIZE : (i+1)*BATCH_SIZE]}) \
+			feed_dict={x:test_images[i*BATCH_SIZE : (i+1)*BATCH_SIZE]}) \
 			for i in range(num_test_batches) ])
 		print('Test of model')
 		print('Test_accuracy={0:0.4f}'.format(test_accuracy))
 		"""
 
 		"""
-		test_accuracy = loss.eval(feed_dict={x:test['images'][0:BATCH_SIZE]})
+		test_accuracy = loss.eval(feed_dict={x:test_images[0:BATCH_SIZE]})
 		print('Test_accuracy={0:0.4f}'.format(test_accuracy))				
 		"""
 
