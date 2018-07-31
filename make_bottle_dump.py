@@ -80,14 +80,10 @@ def split_data(data, ratio=(6,1,3)):
 	data_valid = dict()
 	data_test = dict()
 	
-	for key in data_train:
+	for key in data:
 		data_train[key] = data[key][ : len_train]
-
-	for key in data_valid:
 		data_valid[key] = data[key][len_train : len_train + len_valid]
-
-	for key in data_test:
-		ddata_test[key] = data[key][len_train + len_valid : ]
+		data_test[key] = data[key][len_train + len_valid : ]
 
 	data_train['size'] = len(data_train['labels'])
 	data_valid['size'] = len(data_valid['labels'])
