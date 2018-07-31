@@ -131,15 +131,17 @@ with graph.as_default():
 	input_bottleneck = tf.reshape(x, [-1, bottleneck_tensor_size])
 
 	f1 = fullyConnectedLayer(
-		input_bottleneck, input_size=bottleneck_tensor_size, num_neurons=512, 
-		func=tf.nn.relu, name='F1')
+		input_bottleneck, input_size=bottleneck_tensor_size, num_neurons=1, 
+		func=tf.nn.sigmoid, name='F1') # func=tf.nn.relu
 	
+	"""
 	drop1 = tf.layers.dropout(inputs=f1, rate=0.4)	
 	
 	f2 = fullyConnectedLayer(drop1, input_size=512, num_neurons=1, 
 		func=None, name='F2')
+	"""
 
-	output = f2
+	output = f1
 	print('output =', output)
 
 	# 2. Add nodes that represent the optimization algorithm.
