@@ -152,7 +152,7 @@ with graph.as_default():
 	#loss = tf.nn.l2_loss(output - y)
 
 	#optimizer = tf.train.AdagradOptimizer(0.01)
-	optimizer= tf.train.AdagradOptimizer(0.001)
+	optimizer= tf.train.AdagradOptimizer(0.005)
 	#optimizer= tf.train.AdamOptimizer(0.01)
 	#train_op = tf.train.GradientDescentOptimizer(0.01)
 	train_op = optimizer.minimize(loss)
