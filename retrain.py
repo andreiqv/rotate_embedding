@@ -170,6 +170,11 @@ with graph.as_default():
 				print('valid: {0:.2f} - {1:.2f}'.format(output_values[0][0]*360, valid_labels[0][0]*360))
 				print('valid: {0:.2f} - {1:.2f}'.format(output_values[1][0]*360, valid_labels[1][0]*360))
 
+				print('filenames:', valid['filenames'][0])
+				print('labels:', valid['labels'][0][0], '   grad=', valid['labels'][0][0]*360.0)
+				print('output:', output_values[0][0], '   grad=', output_values[0][0]*360.0)
+				print('emb:', valid['embedding'][0])
+
 				output_angles_valid = []
 				for i in range(num_valid_batches):
 					feed_dict = {x:valid_data[i*BATCH_SIZE:(i+1)*BATCH_SIZE]}
