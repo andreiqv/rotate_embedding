@@ -22,7 +22,7 @@ import gzip
 
 from rotate_images import *
 
-BATCH_SIZE = 5
+BATCH_SIZE = 16
 NUM_ITERS = 500000
 
 data_file = "dump.gz"
@@ -164,7 +164,7 @@ with graph.as_default():
 
 		for iteration in range(NUM_ITERS):			  # Train iteratively for NUM_iterationS.		 
 
-			if iteration % 2000 == 0:
+			if iteration % 5000 == 0:
 
 				output_values = output.eval(feed_dict = {x:valid_data[:3]})
 				print('valid: {0:.2f} - {1:.2f}'.format(output_values[0][0]*360, valid_labels[0][0]*360))
