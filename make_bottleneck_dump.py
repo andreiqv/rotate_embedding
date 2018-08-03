@@ -94,9 +94,10 @@ def split_data(data, ratio=(6,1,3)):
 	return splited_data
 
 
-def make_images_dump(in_dir, out_file):
 
-	data1 = load_data(in_dir, img_size=(224, 224))
+def make_images_dump(in_dir, out_file, shape):
+
+	data1 = load_data(in_dir, img_size=(shape[0], shape[1]))
 
 	print(len(data1['images']))
 	print(len(data1['labels']))

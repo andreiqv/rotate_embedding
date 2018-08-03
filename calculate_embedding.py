@@ -32,14 +32,18 @@ def module1(x, shape):
 
 def calculate_embedding(images, shape):
 
+	#bottleneck_tensor_size = 1024
+
 	height, width, color =  shape
-	bottleneck_tensor_size = 1001
 
 	x = tf.placeholder(tf.float32, [None, height, width, 3], name='Placeholder-x')
 
 	resized_input_tensor = tf.reshape(x, [-1, height, width, 3])
 
-	module = hub.Module("https://tfhub.dev/google/imagenet/resnet_v2_152/classification/1")	
+	#module = hub.Module("https://tfhub.dev/google/imagenet/resnet_v2_152/classification/1")	
+	
+	module = hub.Module("https://tfhub.dev/google/imagenet/resnet_v2_152/feature_vector/1")	 
+		# num_features = 2048, height x width = 224 x 224 pixels
 	assert height, width == hub.get_expected_image_size(module)
 	
 	bottleneck_tensor = module(resized_input_tensor)  # Features with shape [batch_size, num_features]

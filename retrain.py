@@ -124,7 +124,7 @@ graph = tf.Graph() # no necessiry
 with graph.as_default():
 
 	# 1. Construct a graph representing the model.
-	bottleneck_tensor_size = 1001
+	bottleneck_tensor_size =  2048
 	x = tf.placeholder(tf.float32, [None, 1, bottleneck_tensor_size], name='Placeholder-x') # Placeholder for input.
 	y = tf.placeholder(tf.float32, [None, 1], name='Placeholder-y')   # Placeholder for labels.
 	
