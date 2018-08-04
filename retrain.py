@@ -115,6 +115,28 @@ def fullyConnectedLayer(p_in, input_size, num_neurons, func=None, name=''):
 
 #------------------------
 
+def network1(input_tensor, input_size):
+
+	f1 = fullyConnectedLayer(
+		input_tensor, input_size=bottleneck_tensor_size, num_neurons=1, 
+		func=tf.nn.sigmoid, name='F1') # func=tf.nn.relu
+	
+	return f1
+
+
+def network2(input_tensor, input_size, hidden_num=512):
+
+	f1 = fullyConnectedLayer(
+		input_bottleneck, input_size=bottleneck_tensor_size, num_neurons=hidden_num, 
+		func=tf.nn.sigmoid, name='F1') # func=tf.nn.relu
+	
+	drop1 = tf.layers.dropout(inputs=f1, rate=0.4)	
+	
+	f2 = fullyConnectedLayer(drop1, input_size=hidden_num, num_neurons=1, 
+		func=None, name='F2')
+
+	return f2
+
 
 #-------------------
 
@@ -130,18 +152,7 @@ with graph.as_default():
 	
 	input_bottleneck = tf.reshape(x, [-1, bottleneck_tensor_size])
 
-	f1 = fullyConnectedLayer(
-		input_bottleneck, input_size=bottleneck_tensor_size, num_neurons=1, 
-		func=tf.nn.sigmoid, name='F1') # func=tf.nn.relu
-	
-	"""
-	drop1 = tf.layers.dropout(inputs=f1, rate=0.4)	
-	
-	f2 = fullyConnectedLayer(drop1, input_size=512, num_neurons=1, 
-		func=None, name='F2')
-	"""
-
-	output = f1
+	output = network2(input_bottleneck, bottleneck_tensor_size)
 	print('output =', output)
 
 	# 2. Add nodes that represent the optimization algorithm.
